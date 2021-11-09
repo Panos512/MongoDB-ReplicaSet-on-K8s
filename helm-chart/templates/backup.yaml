@@ -1,0 +1,33 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: backup-mongodb
+spec:
+  schedule: "0 4 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: cms-mongodb-backup
+            image: registry.cern.ch/cmsweb/cms-mongodb-backup
+            imagePullPolicy: IfNotPresent
+            command:
+            - /bin/sh
+            - -c
+            - /root/backup.sh
+            volumeMounts:
+            - name: s3-config
+            mountPath: /etc/s3config.cfg
+            subPath: s3config.cfg
+            - name: mongodump-config
+            mountPath: /etc/mongodump.cfg
+            subPath: mongodump.cfg
+          restartPolicy: OnFailure
+          volumes:
+            - name: s3-config
+                secret:
+                secretName: s3-config
+            - name: mongodump-config
+                secret:
+                secretName: mongodump-config
